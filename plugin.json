@@ -1,0 +1,18 @@
+{
+  "id": "bdginie",
+  "schema_version": "v1",
+  "name_for_model": "Business Development Genie",
+  "name_for_human": "Business Development Genie",
+  "description_for_model": "Scrape Company Client Data for Business Development Analysis.",
+  "description_for_human": "Scrape Company Client Data for Business Development Analysis.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "python",
+    "python": {
+      "source": "",
+      "direct_response": true
+    }
+  }
+}
