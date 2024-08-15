@@ -163,7 +163,12 @@ def run_bdginie(query: QueryRequest):
                    topp=0.5,
                    fpenalty=1.0)
         #
-        comp_name = llm.generate(system=system, user=user_query, assistant=assistant, response_type="detector")
+        res = llm.generate(system=system, user=user_query, assistant=assistant, response_type="detector")
+        comp_res = json.loads(res)
+        if "company_name" in comp_res.keys():
+            comp_name = comp_res["company_name"]
+        else:
+            comp_name = str(comp_res)
         data104 = crawler.crawl104(keyword=comp_name)
         # 搜尋統一編號來查詢金腦資料，目前暫時用不到，先註解掉，如果之後要用記得bing回傳的東西需要再解析
         # bid_term = f"{user_query}統一編號"
