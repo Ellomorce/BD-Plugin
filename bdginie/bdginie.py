@@ -146,8 +146,8 @@ class AOAI:
             except Exception as errmsg:
                 return str(errmsg)
 
-@app.post("/start")
-def bdginie(query: QueryRequest):
+@app.post("/bdginie")
+def run_bdginie(query: QueryRequest):
     try:
         user_query = query.user_query
         #
