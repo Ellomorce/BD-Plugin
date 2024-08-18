@@ -3,6 +3,7 @@ import json
 import random
 import requests
 import cloudscraper
+import uvicorn
 from urllib.parse import urlencode
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -187,3 +188,6 @@ def run_bdginie(query: QueryRequest):
 @app.get("/")
 def read_root():
     return {"message": "FastAPI server is running!"}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=9001)
