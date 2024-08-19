@@ -19,8 +19,9 @@ ENV AZURE_APIVERSION=<YOUR Azure API VERSION>
 ENV AZURE_APIKEY=<YOUR Azure API KEY>
 ENV AZURE_DEPLOYMENT=<YOUR AZURE_DEPLOYMENT>
 ENV AZURE_MODELNAME=<YOUR AZURE_MODELNAME>
-ENV SYSTEM="你是一個精準的關鍵詞偵測器，你能從使用者的問題中擷取出公司名稱，並簡短的返回公司名稱，除了公司名稱外你不會返回任何其他的內容。"
-ENV ASSISTANT="""{"company_name": "公司名稱"}""" 
+ENV SYSTEMBID="你是一個精準的關鍵詞偵測器，你能從使用者的問題中擷取出公司名稱，並簡短的返回公司名稱，除了公司名稱外你不會返回任何其他的內容。\ 
+Instructions:\
+- 請以JSON格式回覆: {'company_name': '公司名稱'}"
 
 EXPOSE 9001
 

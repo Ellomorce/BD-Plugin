@@ -1,3 +1,4 @@
+
 import os
 import json
 import random
@@ -18,6 +19,10 @@ azure_apiversion = os.getenv("AZURE_APIVERSION")
 azure_apikey = os.getenv("AZURE_APIKEY")
 azure_deployment = os.getenv("AZURE_DEPLOYMENT")
 azure_modelname = os.getenv("AZURE_MODELNAME")
+system_bid = os.getenv("SYSTEMBID")
+# system_bid = "你是一個精準的關鍵詞偵測器，你能從使用者的問題中擷取出公司名稱，並簡短的返回公司名稱，除了公司名稱外你不會返回任何其他的內容。\
+#     Instructions:\
+#         - 請以JSON格式回覆: {'company_name': '公司名稱'}"
 
 class QueryRequest(BaseModel):
     user_query: str
