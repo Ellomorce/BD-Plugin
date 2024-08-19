@@ -154,6 +154,9 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# Debug
+*.vscode
+
 # Other Ignore
 docs/
 *temp.py

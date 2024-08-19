@@ -70,7 +70,7 @@ class AOAI:
                  apiversion, 
                  apikey, 
                  deployment, 
-                 modelname, 
+                 model, 
                  maxtoken, 
                  temp, 
                  topk, 
@@ -83,7 +83,7 @@ class AOAI:
         self.api_version = apiversion
         self.api_key = apikey
         self.deployment = deployment
-        self.modelname = modelname
+        self.modelname = model
         if embed == None:
             pass
         else:
@@ -105,37 +105,35 @@ class AOAI:
         if prompt_type == 'test':
             system = "You are professional translator, you can translate english to traditional chinese."
             user = "Shaun is a reliable engineer."
-            assistant = ""
         elif prompt_type == "detector":
-            system = "你是一個精準的關鍵詞偵測器，你能從使用者的問題中擷取出公司名稱，並簡短的返回公司名稱，除了公司名稱外你不會返回任何其他的內容。"
+            system = """你是一個精準的關鍵詞偵測器，你能從使用者的問題中擷取出公司名稱，並簡短的返回公司名稱，除了公司名稱外你不會返回任何其他的內容。
+            Instructions: 
+            - 請以JSON格式回覆: {"company_name": "公司名稱"}"""
             user = content
-            assistant = """{"company_name": "公司名稱"}"""
         else:
             with open('Inputs.yaml', 'r') as file:
                 prompt = yaml.load(file, Loader=yaml.FullLoader)['prompt']
                 system = prompt["system"]
                 user = content
-                assistant = prompt["assistant"]
-        return system, user, assistant
+        return system, user
     
-    def generate(self, system, user, assistant, reponse_type=None):
-        if reponse_type == None:
-            reponse_type == "chat"
+    def generate(self, system, user, response_type):
+        if response_type == None:
+            response_type == "chat"
         message = [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
-            {"role": "assistant", "content": assistant}
         ]
         if user == "":
             return "Content is invalid."
         elif user == None:
             return "Content is invalid."
         else:
-            if reponse_type == "chat":
+            if response_type == "chat":
                 try:
                     response = self.client.chat.completions.create(
                         messages= message,
-                        modelname= self.modelname,
+                        model= self.modelname,
                         max_tokens=self.max_new_tokens,
                         frequency_penalty= self.frequency_penalty,
                         temperature= self.temperature,
@@ -144,11 +142,11 @@ class AOAI:
                     return response.choices[0].message.content
                 except Exception as errmsg:
                     return errmsg
-            elif reponse_type == "detector":
+            elif response_type == "detector":
                 try:
                     response = self.client.chat.completions.create(
                         messages= message,
-                        modelname= self.modelname,
+                        model= self.modelname,
                         response_format={ "type": "json_object" },
                         max_tokens=self.max_new_tokens,
                         frequency_penalty= self.frequency_penalty,
@@ -158,9 +156,9 @@ class AOAI:
                     return response.choices[0].message.content
                 except Exception as errmsg:
                     return errmsg
-#%%
+
 if __name__=='__main__':
-    load_dotenv("project.env")
+    load_dotenv("../bdginie/project.env")
     bingkey = os.getenv("BINGKEY")
     azure_endpoint = os.getenv("AZURE_ENDPOINT")
     azure_apiversion = os.getenv("AZURE_APIVERSION")
@@ -174,17 +172,16 @@ if __name__=='__main__':
                    apiversion=azure_apiversion,
                    apikey=azure_apikey,
                    deployment=azure_deployment,
-                   modelname=azure_modelname,
+                   model=azure_modelname,
                    maxtoken=2048,
                    temp=0.5,
                    topk=0.5,
                    topp=0.5,
                    fpenalty=1.0)
-    #
-    system_bid, user_bid, assistant_bid = llm.select_prompt(prompt_type="detector")
-    res = llm.generate(system=system_bid, user=user_query, assistant=assistant_bid, response_type="detector")
+#%%
+    system_bid, user_bid = llm.select_prompt(prompt_type="detector", content=user_query)
+    res = llm.generate(system=system_bid, user=user_query, response_type="detector")
     comp_res = json.loads(res)
-    print(comp_res)
     if "company_name" in comp_res.keys():
         comp_name = comp_res["company_name"]
     else:
@@ -197,7 +194,6 @@ if __name__=='__main__':
             keyword=comp_name
     except: 
         keyword = input()
-    #
     data104 = crawler.crawl104(keyword=keyword)
     search_term = f"{keyword}主要營業項目經營團隊競爭優勢進貨廠商銷售市場貸款需求"
     bing_results = crawler.search_bing(subscription_key=bingkey, search_term=search_term)
@@ -207,16 +203,16 @@ if __name__=='__main__':
             json.dump(bddata, outfile, ensure_ascii=False)
 #%%
     # Getting BID
-    bid_term = f"{keyword}統一編號"
-    bid_results = crawler.search_bing(subscription_key=bingkey, search_term=bid_term)
-    print(bid_results)
+    # bid_term = f"{keyword}統一編號"
+    # bid_results = crawler.search_bing(subscription_key=bingkey, search_term=bid_term)
+    # print(bid_results)
 #%%
     test_json = ""
     with open(test_json, "r", encoding='utf-8-sig') as file:
         bd_ref = json.load(file)
     content_front = "以下文件內容是有關目標公司的JSON資料，請參考這些資料，幫助使用者分析目標公司所在的市場、主要經營項目、負責人、經營團隊，並進一步分析是否有銀行貸款、團體保險、尋找股票銷售代理商的需求。以下是有關目標公司的資料:\r\n"
     content = content_front + str(bd_ref)
-    system, user, assistant = llm.select_prompt(prompt_type="else", content=bd_ref)
-    bd_res = llm.generate(system=system_bid, user=user_query, assistant=assistant_bid, response_type="chat")
+    system, user = llm.select_prompt(prompt_type="else", content=bd_ref)
+    bd_res = llm.generate(system=system_bid, user=user_query, response_type="chat")
     print(bd_res)
 #%%

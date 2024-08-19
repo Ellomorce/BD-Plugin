@@ -4,20 +4,20 @@ import random
 import requests
 import cloudscraper
 import uvicorn
+from dotenv import load_dotenv
 from urllib.parse import urlencode
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from openai import AzureOpenAI
 
 app = FastAPI()
+load_dotenv("project.env")
 bingkey = os.getenv("BINGKEY")
 azure_endpoint = os.getenv("AZURE_ENDPOINT")
 azure_apiversion = os.getenv("AZURE_APIVERSION")
 azure_apikey = os.getenv("AZURE_APIKEY")
 azure_deployment = os.getenv("AZURE_DEPLOYMENT")
 azure_modelname = os.getenv("AZURE_MODELNAME")
-system = os.getenv("SYSTEM")
-assistant = os.getenv("ASSISTANT")
 
 class QueryRequest(BaseModel):
     user_query: str
@@ -49,6 +49,7 @@ class Scraper:
         }
         response = requests.get(self.bingurl, headers=headers, params=params)
         response.raise_for_status()
+        print("Bing Search Reponse Check:", response.text)
         search_results = response.json()['webPages']['value'] 
         bing_results = []
         for result in search_results:
@@ -82,7 +83,7 @@ class AOAI:
                  apiversion, 
                  apikey, 
                  deployment, 
-                 modelname, 
+                 model, 
                  maxtoken, 
                  temp, 
                  topk, 
@@ -95,7 +96,7 @@ class AOAI:
         self.api_version = apiversion
         self.api_key = apikey
         self.deployment = deployment
-        self.modelname = modelname
+        self.modelname = model
         if embed is not None:
             self.embed = embed
         self.max_new_tokens = maxtoken
@@ -111,13 +112,12 @@ class AOAI:
             default_headers={"content-type": "application/json"}
         )
     
-    def generate(self, system, user, assistant, response_type=None):
+    def generate(self, system, user, response_type=None):
         if response_type is None:
             response_type = "chat"
         message = [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
-            {"role": "assistant", "content": assistant}
         ]
         if not user:
             return "Content is invalid."
@@ -126,23 +126,25 @@ class AOAI:
                 if response_type == "chat":
                     response = self.client.chat.completions.create(
                         messages=message,
-                        modelname=self.modelname,
+                        model=self.modelname,
                         max_tokens=self.max_new_tokens,
                         frequency_penalty=self.frequency_penalty,
                         temperature=self.temperature,
                         top_p=self.top_p
                     )
+                    print("GPT Reponse Check:", response)
                     return response.choices[0].message.content
                 elif response_type == "detector":
                     response = self.client.chat.completions.create(
                         messages=message,
-                        modelname=self.modelname,
+                        model=self.modelname,
                         response_format={"type": "json_object"},
                         max_tokens=self.max_new_tokens,
                         frequency_penalty=self.frequency_penalty,
                         temperature=self.temperature,
                         top_p=self.top_p
                     )
+                    print("GPT Reponse Check:", response)
                     return response.choices[0].message.content
             except Exception as errmsg:
                 return str(errmsg)
@@ -157,14 +159,17 @@ def run_bdginie(query: QueryRequest):
                    apiversion=azure_apiversion,
                    apikey=azure_apikey,
                    deployment=azure_deployment,
-                   modelname=azure_modelname,
+                   model=azure_modelname,
                    maxtoken=2048,
                    temp=0.5,
                    topk=0.5,
                    topp=0.5,
                    fpenalty=1.0)
         #
-        res = llm.generate(system=system, user=user_query, assistant=assistant, response_type="detector")
+        system_bid = """你是一個精準的關鍵詞偵測器，你能從使用者的問題中擷取出公司名稱，並簡短的返回公司名稱，除了公司名稱外你不會返回任何其他的內容。
+        Instructions:
+        - 請以JSON格式回覆: {'company_name': '公司名稱'}"""
+        res = llm.generate(system=system_bid, user=user_query, response_type="detector")
         comp_res = json.loads(res)
         if "company_name" in comp_res.keys():
             comp_name = comp_res["company_name"]
@@ -191,3 +196,4 @@ def read_root():
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=9001)
+# %%
