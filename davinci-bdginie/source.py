@@ -5,7 +5,7 @@ from pyodide.http import pyfetch
 async def post_data():
     try:
         response = await pyfetch(
-            'https://127.0.0.1/yourapi',
+            'bdplugin.azurewebsites.net/bdginie',
             method='POST',
             headers={
                 'Accept': 'application/json',

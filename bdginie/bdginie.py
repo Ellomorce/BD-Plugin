@@ -1,18 +1,17 @@
-
 import os
 import json
 import random
 import requests
 import cloudscraper
 import uvicorn
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from urllib.parse import urlencode
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from openai import AzureOpenAI
 
 app = FastAPI()
-load_dotenv("project.env")
+# load_dotenv("project.env")
 bingkey = os.getenv("BINGKEY")
 azure_endpoint = os.getenv("AZURE_ENDPOINT")
 azure_apiversion = os.getenv("AZURE_APIVERSION")
@@ -24,8 +23,8 @@ system_bid = os.getenv("SYSTEMBID")
 #     Instructions:\
 #         - 請以JSON格式回覆: {'company_name': '公司名稱'}"
 
-class QueryRequest(BaseModel):
-    user_query: str
+# class QueryRequest(BaseModel):
+#     message: str
 
 class Scraper:
     
@@ -155,21 +154,38 @@ class AOAI:
                 return str(errmsg)
 
 @app.post("/bdginie")
-def run_bdginie(query: QueryRequest):
+async def run_bdginie(request: Request):
     try:
-        user_query = query.user_query
-        #
+        raw_data = await request.body()
+        # print("Raw Data is:", raw_data)
+        json_str = raw_data.decode("utf-8")
+        # print("Received JSON String:", json_str)  # 調試用
+        
+        try:
+            data = json.loads(json_str)
+        except json.JSONDecodeError as e:
+            print("JSON Decode Error:", e)
+            raise HTTPException(status_code=400, detail="Invalid JSON string.")
+        
+        if isinstance(data, str):
+            query_data = eval(data)
+        else:
+            query_data = data
+        user_query = query_data.get('message')
+        if not user_query:
+            raise HTTPException(status_code=400, detail="Message field is required.")
+        # 
         crawler = Scraper()
         llm = AOAI(endpoint=azure_endpoint,
-                   apiversion=azure_apiversion,
-                   apikey=azure_apikey,
-                   deployment=azure_deployment,
-                   model=azure_modelname,
-                   maxtoken=2048,
-                   temp=0.5,
-                   topk=0.5,
-                   topp=0.5,
-                   fpenalty=1.0)
+                    apiversion=azure_apiversion,
+                    apikey=azure_apikey,
+                    deployment=azure_deployment,
+                    model=azure_modelname,
+                    maxtoken=2048,
+                    temp=0.5,
+                    topk=0.5,
+                    topp=0.5,
+                    fpenalty=1.0)
         #
         system_bid = """你是一個精準的關鍵詞偵測器，你能從使用者的問題中擷取出公司名稱，並簡短的返回公司名稱，除了公司名稱外你不會返回任何其他的內容。
         Instructions:
@@ -191,14 +207,15 @@ def run_bdginie(query: QueryRequest):
         bddata = [data104]
         bddata.extend(bing_results)
         return {"result": bddata}
+    
+    except HTTPException as http_err:
+        raise http_err
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 測試路由
 @app.get("/")
 def read_root():
     return {"message": "FastAPI server is running!"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=9001)
-# %%
