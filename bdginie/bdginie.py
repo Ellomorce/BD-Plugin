@@ -4,14 +4,14 @@ import random
 import requests
 import cloudscraper
 import uvicorn
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 from urllib.parse import urlencode
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from openai import AzureOpenAI
 
 app = FastAPI()
-# load_dotenv("project.env")
+load_dotenv("project.env")
 bingkey = os.getenv("BINGKEY")
 azure_endpoint = os.getenv("AZURE_ENDPOINT")
 azure_apiversion = os.getenv("AZURE_APIVERSION")
