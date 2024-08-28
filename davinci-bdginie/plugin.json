@@ -12,7 +12,7 @@
     "type": "python",
     "python": {
       "source": "",
-      "direct_response": true
+      "direct_response": false
     }
   }
 }
