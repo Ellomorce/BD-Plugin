@@ -9,8 +9,19 @@ from urllib.parse import urlencode
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from openai import AzureOpenAI
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+# Banned CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 允許任何來源
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 load_dotenv("project.env")
 bingkey = os.getenv("BINGKEY")
 azure_endpoint = os.getenv("AZURE_ENDPOINT")

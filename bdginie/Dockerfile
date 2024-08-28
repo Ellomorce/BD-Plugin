@@ -3,7 +3,7 @@
 # Edit Time: 2024/08/15
 # Github Repo：BD-Plugin
 ##################################
-FROM python:3.10-slim
+FROM python:3.10
 
 WORKDIR /app
 

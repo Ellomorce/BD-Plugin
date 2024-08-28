@@ -2,7 +2,7 @@ FROM python:3.10
 
 WORKDIR /
 
-COPY .. .
+COPY . .
 
 RUN pip install --upgrade pip
 
