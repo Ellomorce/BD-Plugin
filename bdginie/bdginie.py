@@ -1,15 +1,17 @@
 import os
 import json
 import random
+import re
 import requests
 import cloudscraper
 import uvicorn
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from urllib.parse import urlencode
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from openai import AzureOpenAI
 from fastapi.middleware.cors import CORSMiddleware
+from bs4 import BeautifulSoup
 
 app = FastAPI()
 
@@ -22,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-load_dotenv("project.env")
+# load_dotenv("project.env")
 bingkey = os.getenv("BINGKEY")
 azure_endpoint = os.getenv("AZURE_ENDPOINT")
 azure_apiversion = os.getenv("AZURE_APIVERSION")
@@ -73,6 +75,54 @@ class Scraper:
             snippet = result.get('snippet')
             bing_results.append({'name':name, 'url':url, 'snippet':snippet})
         return bing_results
+    
+    def bid_extractor(self, bing_results):
+        for info in bing_results:
+            if "台灣公司網" in info['name']:
+                if "統編:" in info['snippet']:
+                    text = info['snippet']
+                    infourl = info['url']
+                    break
+                else:
+                    pass
+            elif "台灣公司情報網" in info['name']:
+                if "統編:" in info['snippet']:
+                    text = info['snippet']
+                    infourl = info['url']
+                    break
+                else:
+                    pass
+            elif "公司登記查詢中心" in info['name']:
+                if "統編:" in info['snippet']:
+                    text = info['snippet']
+                    infourl = info['url']
+                    break
+                else:
+                    pass
+            elif "開放政府台灣資料" in info['name']:
+                if "統編:" in info['snippet']:
+                    text = info['snippet']
+                    infourl = info['url']
+                    break
+                else:
+                    pass
+            else:
+                continue
+        if text:
+            match = re.search(r"統編:(\d{8})", text)
+            if match:
+                bid_str = match.group(1)
+                bid = {"統一編號": bid_str}
+                return bid, infourl
+            else:
+                bid_str = "notaxids"
+                bid = {"統一編號": "notaxids"}
+                return bid, infourl
+        else:
+            bid_str = "notaxids"
+            bid = {"統一編號": "notaxids"}
+            infourl = "Company Url Not Found."
+            return bid, infourl
 
     def crawl104(self, keyword):
         keyword_urlcode = urlencode([("keyword", f"{keyword}")])
@@ -90,6 +140,52 @@ class Scraper:
         decoded_content = searchlist.content.decode('utf-8')
         data = json.loads(decoded_content)
         return data["data"][0]
+    
+    def crawltwincn(self, taxid):
+        headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Encoding": "gzip, deflate, br, zstd", 
+            "Accept-language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+            "authority": "www.twincn.com",
+            "User-Agent": self.user_agent[random.randint(0, len(self.user_agent)-1)],
+            }
+        searchurl = f"https://www.twincn.com/item.aspx?no={taxid}"
+        raw = self.scraper.get(url=searchurl, headers=headers)
+        decoded_content = raw.content.decode('utf-8')
+        return decoded_content, searchurl
+    
+    def extractor(self, content):
+        soup = BeautifulSoup(content, 'html.parser')
+        datatable = {}
+        twincn =  {}
+        table_count = 1  # 用來計算表格數量
+        table_selectors = [
+            'table.table.table-striped#basic-data',   # 1. <table class="table table-striped" id="basic-data">
+            'table.table.table-striped:not([id])',    # 2. <table class="table table-striped">（無id）
+            #'table.table.table-striped '              # 3. <table class="table table-striped "> (有空格)
+        ]
+        for selector in table_selectors:
+            tables = soup.select(selector)
+            for table in tables:
+                table_id = f"table_{table_count:02}"  # 根據總表格數來編號
+                # 提取表格中的所有文字
+                table_text = table.get_text(separator=' ', strip=True)
+                # 儲存在字典中
+                datatable[table_id] = table_text
+                table_count += 1
+        
+        twincn["basic data"] = datatable["table_01"]
+        
+        for k, v in datatable.items():
+            if "代表法人" in v:
+                twincn["shareholder"]=datatable[k]
+            elif "法院案號" in v:
+                twincn["judgment history"]=datatable[k]
+            elif "工廠編號" in v:
+                twincn["factories"]=datatable[k]
+            elif "到職日" in v:
+                twincn["managers"]=datatable[k]
+        return twincn
     
 class AOAI:
 
@@ -203,19 +299,44 @@ async def run_bdginie(request: Request):
         - 請以JSON格式回覆: {'company_name': '公司名稱'}"""
         res = llm.generate(system=system_bid, user=user_query, response_type="detector")
         comp_res = json.loads(res)
+        # 從使用者對話擷取公司名稱
         if "company_name" in comp_res.keys():
-            comp_name = comp_res["company_name"]
+            if len(comp_res["company_name"]) == 0:
+                comp_name = "corpname_missing"
+                bid = "Extract Company Name Failed"
+            else:
+                comp_name = comp_res["company_name"]
+                # 搜尋統一編號
+                bid_term = f"{comp_name}統一編號負責人資本額地址電話"
+                bid_results = crawler.search_bing(subscription_key=bingkey, search_term=bid_term)
+                bid, infourl = crawler.bid_extractor(bing_results=bid_results)
         else:
             comp_name = str(comp_res)
-        data104 = crawler.crawl104(keyword=comp_name)
-        # 搜尋統一編號來查詢金腦資料，目前暫時用不到，先註解掉，如果之後要用記得bing回傳的東西需要再解析
-        # bid_term = f"{user_query}統一編號"
-        # bid_results = crawler.search_bing(subscription_key=bingkey, search_term=bid_term)
+            # 搜尋統一編號
+            bid_term = f"{comp_name}統一編號負責人資本額地址電話"
+            bid_results = crawler.search_bing(subscription_key=bingkey, search_term=bid_term)
+            bid, infourl = crawler.bid_extractor(bing_results=bid_results) # bid is a dict
         #
-        search_term = f"{user_query}主要營業項目經營團隊競爭優勢進貨廠商銷售市場貸款需求保險需求"
-        bing_results = crawler.search_bing(subscription_key=bingkey, search_term=search_term)
+        taxid = bid["統一編號"]
+        if taxid == "notaxids":
+            corpdata = "使用者輸入的內容可能不含公司名稱或名稱錯誤，未查詢到該公司相關資料"
+            twincnurl = "使用者輸入的內容可能不含公司名稱或名稱錯誤，未查詢到該公司相關網址"
+        else:
+            twincn_data, searchurl = crawler.crawltwincn(taxid=taxid)
+            corpdata = crawler.extractor(content=twincn_data) # dict
+            twincnurl = {"台灣公司網公司資料連結": searchurl} # dict
         #
-        bddata = [data104]
+        if comp_name == "corpname_missing":
+            data104 = ["104人力銀行網站上沒有目標公司的資料"]
+        else:
+            data104 = crawler.crawl104(keyword=comp_name)
+            search_term = f"{comp_name}主要客戶產品優勢產業分析研究報告"
+            bing_results = crawler.search_bing(subscription_key=bingkey, search_term=search_term)
+        #
+        bddata = [bid]
+        bddata.append(twincnurl)
+        bddata.append(corpdata)
+        bddata.append(data104)
         bddata.extend(bing_results)
         return {"result": bddata}
     
