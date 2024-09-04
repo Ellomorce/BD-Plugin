@@ -5,12 +5,12 @@ import re
 import requests
 import cloudscraper
 import uvicorn
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 from urllib.parse import urlencode
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import AzureOpenAI
-from fastapi.middleware.cors import CORSMiddleware
 from bs4 import BeautifulSoup
 
 app = FastAPI()
@@ -24,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# load_dotenv("project.env")
+load_dotenv("project.env")
 bingkey = os.getenv("BINGKEY")
 azure_endpoint = os.getenv("AZURE_ENDPOINT")
 azure_apiversion = os.getenv("AZURE_APIVERSION")
