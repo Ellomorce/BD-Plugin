@@ -1,33 +1,39 @@
 #%%
+import os
 import re
 import requests
 import json
 import pprint
+from dotenv import load_dotenv
+load_dotenv("project.env")
+bingkey = os.getenv("BINGKEY")
 
-url = "http://127.0.0.1:9001/bdginie"
-headers = {'Content-Type': 'text/plain'}
-data = "{\"message\": \"請幫助我分析台達電子股份有限公司這家公司有沒有貸款、保險或銷售股票的需求。\"}"
+def search_bing(subscription_key, search_term):
+    bingurl = "https://api.bing.microsoft.com/v7.0/search"
+    headers = {"Ocp-Apim-Subscription-Key": subscription_key}
+    params = {
+        "q": search_term,
+        "mkt": 'zh-TW',
+        "textDecorations": True,
+    }
+    response = requests.get(bingurl, headers=headers, params=params)
+    response.raise_for_status()
+    print("Bing Search Reponse Check:", response.text)
+    search_results = response.json()['webPages']['value'] 
+    bing_results = []
+    for result in search_results:
+        name = result.get('name')
+        url = result.get('url')
+        snippet = result.get('snippet')
+        bing_results.append({'name':name, 'url':url, 'snippet':snippet})
+    return bing_results
 #%%
-response = requests.post(url, headers=headers, data=data)
-pprint.pprint(response.json())
+comp_name = "京元電子"
+bid_term = f"{comp_name}統一編號負責人資本額地址電話"
+bid_results = search_bing(subscription_key=bingkey, search_term=bid_term)
 #%%
-# raw = {"message": "請幫助我分析台達電子股份有限公司這家公司有沒有貸款、保險或銷售股票的需求。"}
-# dump = json.dumps(raw, ensure_ascii=False)
-# print(dump)
-
-# test = "{\"message\": \"請幫助我分析台達電子股份有限公司這家公司有沒有貸款、保險或銷售股票的需求。\"}"
-# res = json.loads(test)
-# print(res)
-# print(res.get("message"))
+pprint.pprint(bid_results)
 #%%
-res = response.json()['result']
-for website in res:
-    if "台灣公司網" in website['name']:
-        txtbag = website['snippet']
-    else:
-        pass
-pprint.pprint(txtbag)
-#%%
-match = re.search(r"統編:(\d{8})", txtbag)
-print(match.group(1))
+x = bid_results[2]['snippet'].replace("\ue001", "").replace("\ue000", "")
+print(x)
 #%%

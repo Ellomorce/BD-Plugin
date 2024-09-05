@@ -5,7 +5,7 @@ import re
 import requests
 import cloudscraper
 import uvicorn
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from urllib.parse import urlencode
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-load_dotenv("project.env")
+# load_dotenv("project.env")
 bingkey = os.getenv("BINGKEY")
 azure_endpoint = os.getenv("AZURE_ENDPOINT")
 azure_apiversion = os.getenv("AZURE_APIVERSION")
@@ -77,52 +77,392 @@ class Scraper:
         return bing_results
     
     def bid_extractor(self, bing_results):
+        bid = {"統一編號": "notaxids"}
+        infourl = None
         for info in bing_results:
             if "台灣公司網" in info['name']:
-                if "統編:" in info['snippet']:
-                    text = info['snippet']
+                print("台灣公司網")
+                if "統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
                     infourl = info['url']
+                    match = re.search(r"統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "公司統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"公司統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號為 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號為 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                #
+                elif "統一編號 (統編):" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (統編):(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "營利事業統一編號是 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"營利事業統一編號是 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
                     break
                 else:
                     pass
             elif "台灣公司情報網" in info['name']:
-                if "統編:" in info['snippet']:
-                    text = info['snippet']
+                print("台灣公司情報網")
+                if "統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
                     infourl = info['url']
+                    match = re.search(r"統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "公司統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"公司統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號為 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號為 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                #
+                elif "統一編號 (統編):" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (統編):(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "營利事業統一編號是 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"營利事業統一編號是 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
                     break
                 else:
                     pass
             elif "公司登記查詢中心" in info['name']:
-                if "統編:" in info['snippet']:
-                    text = info['snippet']
+                print("公司登記查詢中心")
+                if "統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
                     infourl = info['url']
+                    match = re.search(r"統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "公司統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"公司統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號為 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號為 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                #
+                elif "統一編號 (統編):" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (統編):(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "營利事業統一編號是 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"營利事業統一編號是 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
                     break
                 else:
                     pass
-            elif "開放政府台灣資料" in info['name']:
-                if "統編:" in info['snippet']:
-                    text = info['snippet']
+            elif "開放政府臺灣資料" in info['name']:
+                print("開放政府臺灣資料")
+                if "統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
                     infourl = info['url']
+                    match = re.search(r"統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "公司統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"公司統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號為 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號為 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                #
+                elif "統一編號 (統編):" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (統編):(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "營利事業統一編號是 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"營利事業統一編號是 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                else:
+                    pass
+            elif "臺灣政府開放資料平台" in info['name']:
+                print("臺灣政府開放資料平台")
+                if "統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "公司統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"公司統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號為 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號為 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                #
+                elif "統一編號 (統編):" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (統編):(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "營利事業統一編號是 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"營利事業統一編號是 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                else:
+                    pass
+            elif "全國前500大公司資料集" in info['name']:
+                print("全國前500大公司資料集")
+                if "統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "公司統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"公司統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號為 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號為 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                #
+                elif "統一編號 (統編):" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (統編):(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "營利事業統一編號是 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"營利事業統一編號是 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                else:
+                    pass
+            elif "上市公司基本資料" in info['name']:
+                print("上市公司基本資料")
+                if "統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "公司統編:" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"公司統編:(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號為 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號為 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                #
+                elif "統一編號 (統編):" in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (統編):(\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "營利事業統一編號是 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"營利事業統一編號是 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
+                    break
+                elif "統一編號 " in info['snippet'].replace("\ue001", "").replace("\ue000", ""):
+                    text = info['snippet'].replace("\ue001", "").replace("\ue000", "")
+                    infourl = info['url']
+                    match = re.search(r"統一編號 (\d{8})", text)
+                    bid_str = match.group(1)
+                    bid["統一編號"] = bid_str
                     break
                 else:
                     pass
             else:
                 continue
-        if text:
-            match = re.search(r"統編:(\d{8})", text)
-            if match:
-                bid_str = match.group(1)
-                bid = {"統一編號": bid_str}
-                return bid, infourl
-            else:
-                bid_str = "notaxids"
-                bid = {"統一編號": "notaxids"}
-                return bid, infourl
-        else:
-            bid_str = "notaxids"
-            bid = {"統一編號": "notaxids"}
+        if infourl == None:
             infourl = "Company Url Not Found."
-            return bid, infourl
+        return bid, infourl
 
     def crawl104(self, keyword):
         keyword_urlcode = urlencode([("keyword", f"{keyword}")])
