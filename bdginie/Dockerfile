@@ -20,4 +20,4 @@ Instructions:\
 EXPOSE 9001
 
 # CMD ["gunicorn", "bdginie:app", "--host", "0.0.0.0", "--port", "9001"]
-CMD ["gunicorn", "bdginie:app", "--bind", "0.0.0.0:9001"]
+CMD ["gunicorn", "bdginie:app", "--bind", "0.0.0.0:9001", "--timeout", "600"]
